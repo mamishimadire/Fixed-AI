@@ -1,0 +1,10 @@
+{
+  "auto_speak": true,
+  "voice_server_url": "http://localhost:5001",
+  "tts_language": "en",
+  "tts_max_chars": 500,
+  "auto_speak_delay_ms": 300,
+  "listening_timeout_ms": 15000,
+  "stream_response": true,
+  "description": "Configure voice interaction behavior. Set auto_speak to false to disable auto text-to-speech"
+}

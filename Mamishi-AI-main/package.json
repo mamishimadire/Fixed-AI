@@ -1,0 +1,15 @@
+{
+  "name": "mamishi-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MAMISHI AI local server powered by Node.js and Ollama",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@tavily/core": "^0.7.3",
+    "better-sqlite3": "^12.10.0",
+    "dotenv": "^17.4.2",
+    "tesseract.js": "^7.0.0"
+  }
+}
