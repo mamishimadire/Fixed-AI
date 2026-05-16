@@ -9,21 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
-  <script type="module">
-    try {
-      const { MLCEngine } = await import("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.79/+esm");
-      window.__MLCEngine = MLCEngine;
-      window.dispatchEvent(new Event("webllm-ready"));
-    } catch(e) {
-      try {
-        const { MLCEngine } = await import("https://esm.run/@mlc-ai/web-llm@0.2.79");
-        window.__MLCEngine = MLCEngine;
-        window.dispatchEvent(new Event("webllm-ready"));
-      } catch(e2) {
-        console.warn("[Offline AI] WebLLM unavailable:", e2.message);
-      }
-    }
-  </script>
   <link id="hljs-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <style>
@@ -802,64 +787,6 @@
 
     .footer-note { color: var(--muted-2); font-size: 12px; text-align: center; margin-top: 10px; }
 
-    /* ── Offline AI modal ───────────────────────────────────────────────── */
-    .offline-modal {
-      display: none; position: fixed; inset: 0; z-index: 1000;
-      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-      align-items: center; justify-content: center;
-    }
-    .offline-modal.open { display: flex; }
-    .offline-modal-card {
-      background: var(--sidebar); border: 1px solid var(--line);
-      border-radius: 18px; padding: 32px 28px; max-width: 420px; width: 90%;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
-    }
-    .offline-modal-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
-    .offline-modal-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
-    .offline-model-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
-    .offline-model-option {
-      display: flex; align-items: center; gap: 12px;
-      border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
-      cursor: pointer; transition: border-color 0.15s, background 0.15s;
-    }
-    .offline-model-option:hover { border-color: var(--muted-2); background: var(--surface); }
-    .offline-model-option input[type=radio] { accent-color: #6b8cff; width: 16px; height: 16px; flex-shrink: 0; }
-    .offline-model-option.selected { border-color: #6b8cff; background: var(--surface); }
-    .offline-model-info strong { font-size: 14px; }
-    .offline-model-info span { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .offline-progress-wrap { margin-bottom: 16px; }
-    .offline-progress-bg {
-      background: var(--surface-2); border-radius: 999px; height: 8px; overflow: hidden; margin-bottom: 8px;
-    }
-    .offline-progress-fill {
-      background: linear-gradient(90deg, #6b8cff, #a78bfa);
-      height: 100%; border-radius: 999px; width: 0%;
-      transition: width 0.3s ease;
-    }
-    .offline-progress-text { font-size: 12px; color: var(--muted); }
-    .offline-error { color: var(--danger); font-size: 13px; margin-bottom: 12px; }
-    .offline-modal-btns { display: flex; gap: 10px; margin-top: 4px; }
-    .offline-download-btn {
-      flex: 1; background: #6b8cff; color: #fff; border: none;
-      border-radius: 10px; padding: 11px 16px; font: inherit; font-size: 14px;
-      font-weight: 600; cursor: pointer; transition: opacity 0.15s;
-    }
-    .offline-download-btn:hover { opacity: 0.88; }
-    .offline-download-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .offline-cancel-btn {
-      background: transparent; border: 1px solid var(--line); color: var(--muted);
-      border-radius: 10px; padding: 11px 16px; font: inherit; font-size: 14px;
-      cursor: pointer; transition: color 0.12s;
-    }
-    .offline-cancel-btn:hover { color: var(--text); }
-    .offline-note { font-size: 11px; color: var(--muted-2); text-align: center; margin-top: 14px; }
-    .offline-badge {
-      display: none; align-items: center; gap: 5px;
-      font-size: 11px; font-weight: 600; color: #a78bfa;
-      background: rgba(107,140,255,0.1); border: 1px solid rgba(107,140,255,0.2);
-      border-radius: 999px; padding: 2px 9px; margin-left: 6px;
-    }
-    .offline-badge.visible { display: inline-flex; }
     .voice-status { font-size: 11px; color: var(--muted); }
 
     .status-bar {
@@ -1507,7 +1434,6 @@
             <option value="groq">Fast</option>
             <option value="openrouter">Extended</option>
             <option value="gemini">Vision</option>
-            <option value="webllm">⚡ Offline AI</option>
           </select>
           <textarea id="user-input-chat" placeholder="Ask anything" rows="1"></textarea>
           <button class="composer-btn" id="voice-btn-chat" onclick="toggleVoice()" title="Voice">
@@ -3791,9 +3717,6 @@ async function sendMessage() {
 }
 
 async function streamAssistantResponse(voiceContext = null) {
-  if ((backendSelect?.value || currentBackend) === "webllm") {
-    return await handleWebLLMResponse();
-  }
   const aiBubble = addRow("ai");
   const providerBadge = aiBubble.closest(".message-row").querySelector(".provider-letter");
   const typingDots = document.createElement("div");
@@ -4210,229 +4133,7 @@ restoreActiveSession();
 syncVoiceModeButtons();
 initBackendStatus();
 
-// ── Offline AI (WebLLM) ──────────────────────────────────────────────────────
-let webLLMEngine   = null;
-let webLLMLoading  = false;
-let webLLMLoaded   = false;
-let webLLMModelId  = null;
-
-const OFFLINE_SYSTEM_PROMPT =
-  "You are MAMISHI AI, an AI assistant built for Africa's future. " +
-  "Help students, professionals, and businesses across Africa. " +
-  "Be helpful, clear, and concise.";
-
-function showOfflineModal(open) {
-  const modal = document.getElementById("offline-modal");
-  if (!modal) return;
-  if (open) {
-    if (webLLMLoaded) { modal.classList.remove("open"); return; }
-    modal.classList.add("open");
-  } else {
-    if (webLLMLoading) {
-      // Abort download by reloading the page
-      window.location.reload();
-      return;
-    }
-    modal.classList.remove("open");
-    if (!webLLMLoaded && backendSelect) backendSelect.value = currentBackend || "";
-  }
-}
-
-function updateOfflineProgress(progress, text) {
-  const fill = document.getElementById("offline-progress-fill");
-  const label = document.getElementById("offline-progress-text");
-  if (fill) fill.style.width = Math.round((progress || 0) * 100) + "%";
-  if (label) label.textContent = text || "Loading…";
-}
-
-function showOfflineError(msg) {
-  const el = document.getElementById("offline-error");
-  if (el) { el.textContent = msg; el.style.display = "block"; }
-}
-
-async function startOfflineDownload() {
-  if (webLLMLoading) return;
-  if (!window.__MLCEngine) {
-    showOfflineError("WebLLM library not loaded yet — wait a few seconds and try again.");
-    return;
-  }
-  if (!navigator.gpu) {
-    showOfflineError("Your browser does not support WebGPU. Please use Chrome 113+ or Edge 113+ on a desktop or modern Android phone.");
-    return;
-  }
-  const radio = document.querySelector('input[name="offline-model"]:checked');
-  const modelId = radio?.value || "TinyLlama-1.1B-Chat-v0.4-q4f16_1-MLC";
-
-  // Update UI for download state
-  const btn = document.getElementById("offline-download-btn");
-  const cancelBtn = document.getElementById("offline-cancel-btn");
-  const errEl = document.getElementById("offline-error");
-  if (btn) btn.disabled = true;
-  if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.textContent = "Cancel download"; }
-  if (errEl) errEl.style.display = "none";
-  document.getElementById("offline-model-options").style.display = "none";
-  document.getElementById("offline-progress-wrap").style.display = "block";
-
-  webLLMLoading = true;
-  try {
-    updateOfflineProgress(0, "Starting engine…");
-    const engine = new window.__MLCEngine();
-    updateOfflineProgress(0, "Engine ready — connecting to model server…");
-    let lastProgressTime = Date.now();
-    const stuckTimer = setInterval(() => {
-      if (Date.now() - lastProgressTime > 45000) {
-        clearInterval(stuckTimer);
-        updateOfflineProgress(0, "Very slow connection detected. Try Nano (135 MB) or check your Wi-Fi.");
-      }
-    }, 5000);
-    engine.setInitProgressCallback((report) => {
-      lastProgressTime = Date.now();
-      updateOfflineProgress(report.progress, report.text);
-    });
-    updateOfflineProgress(0, "Downloading model… (this may take a few minutes)");
-    await engine.reload(modelId);
-    clearInterval(stuckTimer);
-    webLLMEngine  = engine;
-    webLLMLoaded  = true;
-    webLLMModelId = modelId;
-    localStorage.setItem("mamishi_webllm_model", modelId);
-    showOfflineModal(false);
-    // Show offline badge in the page
-    document.querySelectorAll(".offline-badge").forEach(b => b.classList.add("visible"));
-  } catch(e) {
-    document.getElementById("offline-model-options").style.display = "flex";
-    document.getElementById("offline-progress-wrap").style.display = "none";
-    if (btn) { btn.disabled = false; btn.textContent = "⬇ Retry Download"; }
-    if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.textContent = "Cancel"; }
-    showOfflineError("Failed: " + (e.message || String(e)));
-    if (backendSelect) backendSelect.value = currentBackend || "";
-  } finally {
-    webLLMLoading = false;
-  }
-}
-
-async function streamWebLLMResponse(responseContent, clearTyping) {
-  const msgs = [
-    { role: "system", content: OFFLINE_SYSTEM_PROMPT },
-    ...messages.map(m => ({
-      role: m.role,
-      content: typeof m.content === "string" ? m.content
-        : Array.isArray(m.content)
-          ? (m.content.find(c => c.type === "text")?.text || "")
-          : String(m.content || ""),
-    })),
-  ];
-
-  let fullResp = "";
-  const chunks = await webLLMEngine.chat.completions.create({
-    messages: msgs,
-    stream: true,
-    temperature: 0.7,
-    max_tokens: 1024,
-  });
-
-  for await (const chunk of chunks) {
-    const delta = chunk.choices[0]?.delta?.content || "";
-    if (delta) {
-      clearTyping();
-      fullResp += delta;
-      renderMarkdown(responseContent, fullResp);
-      chatEl.scrollTop = chatEl.scrollHeight;
-    }
-  }
-  return fullResp;
-}
-
-async function handleWebLLMResponse() {
-  const aiBubble    = addRow("ai");
-  const typingDots  = document.createElement("div");
-  typingDots.className = "typing-dots";
-  typingDots.innerHTML = "<span></span><span></span><span></span>";
-  const responseContent = document.createElement("div");
-  responseContent.className = "assistant-response-content";
-  aiBubble.appendChild(typingDots);
-  aiBubble.appendChild(responseContent);
-
-  let typingGone = false;
-  function clearTyping() {
-    if (!typingGone) { typingDots.remove(); typingGone = true; }
-  }
-
-  isStreaming = true;
-  document.querySelectorAll("#send-btn,#send-btn-chat").forEach(b => { b.disabled = true; });
-  document.getElementById("stop-btn")?.classList.add("visible");
-
-  let fullResp = "";
-  try {
-    if (!webLLMLoaded) {
-      clearTyping();
-      responseContent.innerHTML =
-        "<p style='color:var(--muted)'>⬇ Download the Offline AI model first.</p>";
-      showOfflineModal(true);
-    } else {
-      fullResp = await streamWebLLMResponse(responseContent, clearTyping);
-      clearTyping();
-      const safeResp = sanitizeAssistantUiText(fullResp);
-      messages.push({ role: "assistant", content: safeResp || "(offline response)" });
-      saveCurrentSession();
-      renderSidebar();
-      updateRetryButton();
-    }
-  } catch(e) {
-    clearTyping();
-    aiBubble.innerHTML += `<p style="color:var(--danger)">Offline AI error: ${escHtml(e.message)}</p>`;
-  } finally {
-    isStreaming = false;
-    document.querySelectorAll("#send-btn,#send-btn-chat").forEach(b => { b.disabled = false; });
-    document.getElementById("stop-btn")?.classList.remove("visible");
-    getActiveInput().focus();
-  }
-}
-
-// Intercept backend-select change to trigger download modal
-if (backendSelect) {
-  backendSelect.addEventListener("change", () => {
-    if (backendSelect.value === "webllm" && !webLLMLoaded) {
-      showOfflineModal(true);
-    }
-  }, true); // capture phase so it fires before existing listener
-}
 </script>
 
-<!-- Offline AI download modal -->
-<div id="offline-modal" class="offline-modal">
-  <div class="offline-modal-card">
-    <div class="offline-modal-title">⚡ Offline AI</div>
-    <div class="offline-modal-subtitle">Download once — works forever with no internet.</div>
-    <div class="offline-model-options" id="offline-model-options">
-      <label class="offline-model-option selected" id="opt-nano">
-        <input type="radio" name="offline-model" value="Qwen2.5-0.5B-Instruct-q4f32_1-MLC" checked>
-        <div class="offline-model-info">
-          <strong>Lite — 400 MB ⭐ Recommended</strong>
-          <span>Best compatibility — works on most devices</span>
-        </div>
-      </label>
-      <label class="offline-model-option" id="opt-standard">
-        <input type="radio" name="offline-model" value="Llama-3.2-1B-Instruct-q4f32_1-MLC">
-        <div class="offline-model-info">
-          <strong>Standard — 1.5 GB</strong>
-          <span>Smarter answers — needs good device &amp; strong Wi-Fi</span>
-        </div>
-      </label>
-    </div>
-    <div class="offline-progress-wrap" id="offline-progress-wrap" style="display:none">
-      <div class="offline-progress-bg">
-        <div class="offline-progress-fill" id="offline-progress-fill"></div>
-      </div>
-      <div class="offline-progress-text" id="offline-progress-text">Preparing download…</div>
-    </div>
-    <div class="offline-error" id="offline-error" style="display:none"></div>
-    <div class="offline-modal-btns">
-      <button class="offline-download-btn" id="offline-download-btn" onclick="startOfflineDownload()">⬇ Download &amp; Enable</button>
-      <button class="offline-cancel-btn" id="offline-cancel-btn" onclick="showOfflineModal(false)">Cancel</button>
-    </div>
-    <div class="offline-note">Requires Chrome 113+ or Edge 113+. Works on Android &amp; Windows.</div>
-  </div>
-</div>
 </body>
 </html>
