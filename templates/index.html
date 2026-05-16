@@ -574,13 +574,17 @@
       min-width: 170px;
       border-radius: 999px;
       border: 1px solid var(--line);
-      background: transparent;
+      background: var(--bg);
       color: var(--text);
       padding: 9px 14px;
       font: inherit;
       outline: none;
       cursor: pointer;
       flex-shrink: 0;
+    }
+    .backend-select option {
+      background: var(--surface);
+      color: var(--text);
     }
     .composer-btn:hover { background: rgba(128,128,128,0.12); }
     .composer-btn svg { width: 17px; height: 17px; }
@@ -1118,6 +1122,17 @@
     }
     .code-ref-open:hover { color: var(--text); border-color: var(--muted); }
     .code-ref-open svg { width: 12px; height: 12px; }
+    .code-ref-card.active { border-color: var(--accent, #6b8cff); background: var(--surface); }
+    .code-ref-card.active .code-ref-open { display: none; }
+    .code-ref-close {
+      background: transparent; border: 1px solid var(--line);
+      color: var(--muted); border-radius: 8px; padding: 5px 10px;
+      font-size: 16px; line-height: 1; font-family: inherit; cursor: pointer;
+      transition: color 0.12s, border-color 0.12s; flex-shrink: 0;
+      display: none;
+    }
+    .code-ref-card.active .code-ref-close { display: flex; align-items: center; }
+    .code-ref-close:hover { color: var(--text); border-color: var(--muted); }
 
     /* ── Improved user bubble ──────────────────────────────────────────── */
     .bubble.user {
@@ -1731,6 +1746,7 @@ function deleteSession(event, id) {
 function loadSession(id) {
   const session = chatHistory.find(item => item.id === id);
   if (!session) return;
+  closeCodePanel();
   currentSession = session;
   messages = [...session.messages];
   saveActiveSessionId(currentSession.id);
@@ -1811,6 +1827,7 @@ function newChat() {
   renderPreviews();
   renderSidebar();
   showEmpty();
+  closeCodePanel();
 }
 
 function startNewSession(firstMessage) {
@@ -3093,7 +3110,9 @@ let codePanelCopyTimer = null;
 let codePanelExt = "txt";
 let codePanelLang = null;
 
-function openCodePanel(code, lang) {
+let activeCodeCard = null;
+
+function openCodePanel(code, lang, card) {
   const panel = document.getElementById("code-panel");
   const codeEl = document.getElementById("code-panel-code");
   const langEl = document.getElementById("code-panel-lang");
@@ -3120,9 +3139,14 @@ function openCodePanel(code, lang) {
   if (lines.length && lines[lines.length - 1] === "") lines.pop();
   codeEl.innerHTML = lines.map(l => `<span class="cl">${l || "​"}</span>`).join("\n");
 
-  // Restore saved panel width if any
+  // Restore saved panel width if any, otherwise let CSS class control
   const savedW = localStorage.getItem("mamishi_panel_width");
-  if (savedW) panel.style.width = savedW;
+  panel.style.width = savedW || "";
+
+  // Update active card highlight
+  if (activeCodeCard) activeCodeCard.classList.remove("active");
+  activeCodeCard = card || null;
+  if (activeCodeCard) activeCodeCard.classList.add("active");
 
   panel.classList.add("open");
   document.getElementById("panel-resize-handle")?.classList.add("visible");
@@ -3132,8 +3156,11 @@ function openCodePanel(code, lang) {
 
 function closeCodePanel() {
   const panel = document.getElementById("code-panel");
-  panel?.classList.remove("open");
+  if (!panel) return;
+  panel.classList.remove("open");
+  panel.style.width = "0px";
   document.getElementById("panel-resize-handle")?.classList.remove("visible");
+  if (activeCodeCard) { activeCodeCard.classList.remove("active"); activeCodeCard = null; }
   closeCodeDropdown();
 }
 
@@ -3283,6 +3310,7 @@ function renderMarkdown(element, text) {
   // Replace each code block with a compact reference card + open in panel
   let lastCodeBlock = null;
   let lastCodeLang = null;
+  let lastCodeCard = null;
   element.querySelectorAll("pre").forEach(pre => {
     if (pre.closest(".code-ref-card")) return;
     const codeEl = pre.querySelector("code");
@@ -3306,23 +3334,26 @@ function renderMarkdown(element, text) {
       <button class="code-ref-open" title="Open in panel">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         Open
-      </button>`;
+      </button>
+      <button class="code-ref-close" title="Close panel">&#x2715;</button>`;
 
     card.dataset.code = code;
     card.dataset.lang = lang || "";
 
-    card.onclick = () => openCodePanel(card.dataset.code, card.dataset.lang);
-    card.querySelector(".code-ref-open").onclick = e => { e.stopPropagation(); openCodePanel(card.dataset.code, card.dataset.lang); };
+    card.onclick = () => openCodePanel(card.dataset.code, card.dataset.lang, card);
+    card.querySelector(".code-ref-open").onclick = e => { e.stopPropagation(); openCodePanel(card.dataset.code, card.dataset.lang, card); };
+    card.querySelector(".code-ref-close").onclick = e => { e.stopPropagation(); closeCodePanel(); };
 
     pre.parentNode.replaceChild(card, pre);
 
     lastCodeBlock = code;
     lastCodeLang = lang || "";
+    lastCodeCard = card;
   });
 
   // Auto-open last code block in panel for AI messages
   if (element.classList.contains("ai") && lastCodeBlock) {
-    openCodePanel(lastCodeBlock, lastCodeLang);
+    openCodePanel(lastCodeBlock, lastCodeLang, lastCodeCard);
   }
 
   if (element.classList.contains("ai")) addSpeakButton(element, text);
