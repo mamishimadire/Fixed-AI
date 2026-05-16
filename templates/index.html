@@ -4219,12 +4219,15 @@ function showOfflineModal(open) {
   const modal = document.getElementById("offline-modal");
   if (!modal) return;
   if (open) {
-    modal.classList.add("open");
-    // If already loaded, skip download — just close
     if (webLLMLoaded) { modal.classList.remove("open"); return; }
+    modal.classList.add("open");
   } else {
+    if (webLLMLoading) {
+      // Abort download by reloading the page
+      window.location.reload();
+      return;
+    }
     modal.classList.remove("open");
-    // If user cancels and no model loaded, reset dropdown
     if (!webLLMLoaded && backendSelect) backendSelect.value = currentBackend || "";
   }
 }
@@ -4255,7 +4258,7 @@ async function startOfflineDownload() {
   const cancelBtn = document.getElementById("offline-cancel-btn");
   const errEl = document.getElementById("offline-error");
   if (btn) btn.disabled = true;
-  if (cancelBtn) cancelBtn.disabled = true;
+  if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.textContent = "Cancel download"; }
   if (errEl) errEl.style.display = "none";
   document.getElementById("offline-model-options").style.display = "none";
   document.getElementById("offline-progress-wrap").style.display = "block";
@@ -4278,7 +4281,7 @@ async function startOfflineDownload() {
     document.getElementById("offline-model-options").style.display = "flex";
     document.getElementById("offline-progress-wrap").style.display = "none";
     if (btn) { btn.disabled = false; btn.textContent = "⬇ Retry Download"; }
-    if (cancelBtn) cancelBtn.disabled = false;
+    if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.textContent = "Cancel"; }
     showOfflineError("Download failed: " + e.message);
     if (backendSelect) backendSelect.value = currentBackend || "";
   } finally {
