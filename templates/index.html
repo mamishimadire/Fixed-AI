@@ -4253,7 +4253,11 @@ function showOfflineError(msg) {
 async function startOfflineDownload() {
   if (webLLMLoading) return;
   if (!window.__MLCEngine) {
-    showOfflineError("Offline AI needs Chrome 113+ or Edge 113+. Please update your browser.");
+    showOfflineError("WebLLM library not loaded yet — wait a few seconds and try again.");
+    return;
+  }
+  if (!navigator.gpu) {
+    showOfflineError("Your browser does not support WebGPU. Please use Chrome 113+ or Edge 113+ on a desktop or modern Android phone.");
     return;
   }
   const radio = document.querySelector('input[name="offline-model"]:checked');
@@ -4300,7 +4304,7 @@ async function startOfflineDownload() {
     document.getElementById("offline-progress-wrap").style.display = "none";
     if (btn) { btn.disabled = false; btn.textContent = "⬇ Retry Download"; }
     if (cancelBtn) { cancelBtn.disabled = false; cancelBtn.textContent = "Cancel"; }
-    showOfflineError("Download failed: " + e.message);
+    showOfflineError("Failed: " + (e.message || String(e)));
     if (backendSelect) backendSelect.value = currentBackend || "";
   } finally {
     webLLMLoading = false;
@@ -4401,25 +4405,18 @@ if (backendSelect) {
     <div class="offline-modal-title">⚡ Offline AI</div>
     <div class="offline-modal-subtitle">Download once — works forever with no internet.</div>
     <div class="offline-model-options" id="offline-model-options">
-      <label class="offline-model-option" id="opt-nano">
-        <input type="radio" name="offline-model" value="SmolLM2-135M-Instruct-q0f16-MLC">
-        <div class="offline-model-info">
-          <strong>Nano — 135 MB</strong>
-          <span>Very fast download, basic answers, slowest internet</span>
-        </div>
-      </label>
-      <label class="offline-model-option selected" id="opt-lite">
-        <input type="radio" name="offline-model" value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC" checked>
+      <label class="offline-model-option selected" id="opt-nano">
+        <input type="radio" name="offline-model" value="Qwen2.5-0.5B-Instruct-q4f32_1-MLC" checked>
         <div class="offline-model-info">
           <strong>Lite — 400 MB ⭐ Recommended</strong>
-          <span>Best balance for most Android &amp; Windows devices</span>
+          <span>Best compatibility — works on most devices</span>
         </div>
       </label>
       <label class="offline-model-option" id="opt-standard">
-        <input type="radio" name="offline-model" value="Llama-3.2-1B-Instruct-q4f16_1-MLC">
+        <input type="radio" name="offline-model" value="Llama-3.2-1B-Instruct-q4f32_1-MLC">
         <div class="offline-model-info">
-          <strong>Standard — 800 MB</strong>
-          <span>Smarter answers, needs good device &amp; Wi-Fi</span>
+          <strong>Standard — 1.5 GB</strong>
+          <span>Smarter answers — needs good device &amp; strong Wi-Fi</span>
         </div>
       </label>
     </div>
