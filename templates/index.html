@@ -11,11 +11,17 @@
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
   <script type="module">
     try {
-      const { MLCEngine } = await import("https://esm.run/@mlc-ai/web-llm@0.2.79");
+      const { MLCEngine } = await import("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.79/+esm");
       window.__MLCEngine = MLCEngine;
       window.dispatchEvent(new Event("webllm-ready"));
     } catch(e) {
-      console.warn("[Offline AI] WebLLM unavailable:", e.message);
+      try {
+        const { MLCEngine } = await import("https://esm.run/@mlc-ai/web-llm@0.2.79");
+        window.__MLCEngine = MLCEngine;
+        window.dispatchEvent(new Event("webllm-ready"));
+      } catch(e2) {
+        console.warn("[Offline AI] WebLLM unavailable:", e2.message);
+      }
     }
   </script>
   <link id="hljs-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
@@ -4265,18 +4271,21 @@ async function startOfflineDownload() {
 
   webLLMLoading = true;
   try {
+    updateOfflineProgress(0, "Starting engine…");
     const engine = new window.__MLCEngine();
+    updateOfflineProgress(0, "Engine ready — connecting to model server…");
     let lastProgressTime = Date.now();
     const stuckTimer = setInterval(() => {
       if (Date.now() - lastProgressTime > 45000) {
         clearInterval(stuckTimer);
-        updateOfflineProgress(0, "Download seems slow — check your internet connection.");
+        updateOfflineProgress(0, "Very slow connection detected. Try Nano (135 MB) or check your Wi-Fi.");
       }
     }, 5000);
     engine.setInitProgressCallback((report) => {
       lastProgressTime = Date.now();
       updateOfflineProgress(report.progress, report.text);
     });
+    updateOfflineProgress(0, "Downloading model… (this may take a few minutes)");
     await engine.reload(modelId);
     clearInterval(stuckTimer);
     webLLMEngine  = engine;
