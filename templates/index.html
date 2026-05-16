@@ -545,6 +545,10 @@
       line-height: 1.08; font-weight: 500;
       letter-spacing: -0.04em; text-align: center;
     }
+    .hero-slogan {
+      text-align: center; font-size: 14px; color: var(--muted);
+      letter-spacing: 0.04em; margin-top: 6px; font-style: italic;
+    }
 
     .composer-shell {
       width: min(860px, calc(100vw - 320px));
@@ -1371,6 +1375,7 @@
   <div class="content-shell">
     <div id="empty-state">
       <div class="hero-title">What's on your mind today?</div>
+      <div class="hero-slogan">AI built for Africa's future.</div>
       <div class="composer-shell">
         <div id="file-preview-bar-empty"></div>
         <div class="composer-wrap">
@@ -1391,7 +1396,7 @@
           </div>
         </div>
         <input type="file" id="file-input" accept="image/*,.pdf,.txt,.csv,.py,.js,.ts,.cs,.sql,.md,.json,.xlsx,.docx" multiple hidden>
-        <div class="footer-note" id="footer-note" style="display:none;">{{ app_name }} can make mistakes. Enter to send. Shift+Enter for a new line.</div>
+        <div class="footer-note" id="footer-note" style="display:none;">{{ app_name }} — AI built for Africa's future. · Can make mistakes. Enter to send. Shift+Enter for a new line.</div>
       </div>
       <div class="action-row">
         <button class="action-chip" onclick="quickPrompt('Help me write this clearly.')">
@@ -1442,7 +1447,7 @@
           <div class="voice-status" id="voice-status-chat"></div>
         </div>
       </div>
-      <div class="footer-note" style="display:block;margin-top:8px;">{{ app_name }} can make mistakes. Enter to send. Shift+Enter for a new line.</div>
+      <div class="footer-note" style="display:block;margin-top:8px;">{{ app_name }} — AI built for Africa's future. · Can make mistakes. Enter to send. Shift+Enter for a new line.</div>
     </div>
   </div>
 
